@@ -210,6 +210,8 @@ const latticeScale = {
     b: 1,
     c: 1
     };
+
+
 //
 // state
 //
@@ -264,7 +266,6 @@ const {
 //
 // helpers
 //
-
 
 function renderLatticePreview(lattice) {
     previewGroup.clear();
@@ -715,76 +716,10 @@ function rebuild() {
                 cellGroup,
                 cells
             );
-            if (currentType === 'HONEYCOMB') {
-                const a1 =
-                    new THREE.Vector3(
-                        -lattice.cellVectors[0][0],
-                        -lattice.cellVectors[0][1],
-                        0
-                    );
-                
-                const a2 =
-                    new THREE.Vector3(
-                        -lattice.cellVectors[1][0],
-                        -lattice.cellVectors[1][1],
-                        0
-                    );
-                
-                const shift =
-                    a1.clone()
-                      .multiplyScalar(1 / 3)
-                      .add(
-                          a2.clone()
-                            .multiplyScalar(1 / 3)
-                      );
-                  
-                cellGroup.position.add(
-                    shift
-                );
-            }       
+
             
         }
 
-        if (showPrimitiveMeshes) {
-            render2DCells(
-                primitiveGroup,
-                lattice.primitiveVectors,
-                cells,
-                0x00ff88
-            );
-
-            centerGroup2D(
-                primitiveGroup,
-                cells
-            );
-            if (currentType === 'HONEYCOMB') {
-                const a1 =
-                    new THREE.Vector3(
-                        -lattice.primitiveVectors[0][0],
-                        -lattice.primitiveVectors[0][1],
-                        0
-                    );
-                
-                const a2 =
-                    new THREE.Vector3(
-                        -lattice.primitiveVectors[1][0],
-                        -lattice.primitiveVectors[1][1],
-                        0
-                    );
-                
-                const shift =
-                    a1.clone()
-                      .multiplyScalar(1 / 3)
-                      .add(
-                          a2.clone()
-                            .multiplyScalar(1 / 3)
-                      );
-                  
-                wignerSeitzGroup.position.add(
-    shift
-);
-            }       
-        }
 
         if (showNearestBonds) {
             render2DNearestBonds(
@@ -798,48 +733,7 @@ function rebuild() {
             );
         }
 
-        if (showWignerSeitz) {
-            renderWignerSeitz(
-                wignerSeitzGroup,
-                lattice,
-                atoms
-            );
 
-            centerGroup2D(
-                wignerSeitzGroup,
-                cells
-            );
-
-            if (currentType === 'HONEYCOMB') {
-                        wignerSeitzGroup.scale.multiplyScalar(4/3);
-                    wignerSeitzGroup.rotation.z = Math.PI ;
-                    const a1 =
-                    new THREE.Vector3(
-                        lattice.primitiveVectors[0][0],
-                        lattice.primitiveVectors[0][1],
-                        0
-                    );
-                
-                    const a2 =
-                        new THREE.Vector3(
-                            lattice.primitiveVectors[1][0],
-                            lattice.primitiveVectors[1][1],
-                            0
-                        );
-                    
-                    const shift =
-                        a1.clone()
-                          .multiplyScalar(1)
-                          .add(
-                              a2.clone()
-                                .multiplyScalar(1)
-                          );
-                      
-                    wignerSeitzGroup.position.add(
-                        shift
-                    );
-            }       
-        }
     }
 
     //
@@ -932,10 +826,12 @@ diamondButton.addEventListener('click', () => {
 squareButton.addEventListener('click', () => {
     dimension = '2D';
     currentType = 'SQUARE';
+    showWignerSeitz = false;
 
     WSButton.style.display = 'none';
 
     primitiveButton.style.display = 'none';
+
 
     bondButton.style.top = '250px';
     reciprocalButton.style.top = '300px'
@@ -951,6 +847,7 @@ squareButton.addEventListener('click', () => {
 triangularButton.addEventListener('click', () => {
     dimension = '2D';
     currentType = 'TRIANGULAR';
+    showWignerSeitz = false;
 
     WSButton.style.display = 'none';
 
@@ -970,6 +867,7 @@ triangularButton.addEventListener('click', () => {
 honeycombButton.addEventListener('click', () => {
     dimension = '2D';
     currentType = 'HONEYCOMB';
+    showWignerSeitz = false;
 
     WSButton.style.display = 'none';
 

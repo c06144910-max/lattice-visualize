@@ -50,11 +50,18 @@ export function generate2DAtoms(lattice, cells) {
     return atoms;
 }
 
-export function render2DCells(group, vectors, cells, color) {
+export function render2DCells(
+    group,
+    vectors,
+    cells,
+    color,
+    offset = [0, 0]
+) {
     group.clear();
 
     const a1 = v2(vectors[0]);
     const a2 = v2(vectors[1]);
+    const offsetVec = v2(offset);
 
     const material = new THREE.LineBasicMaterial({
         color
@@ -62,7 +69,10 @@ export function render2DCells(group, vectors, cells, color) {
 
     for (let i = 0; i < cells; i++) {
         for (let j = 0; j < cells; j++) {
-            const p0 = latticePoint(i, j, a1, a2);
+            const p0 =
+                latticePoint(i, j, a1, a2)
+                    .add(offsetVec);
+
             const p1 = p0.clone().add(a1);
             const p2 = p0.clone().add(a1).add(a2);
             const p3 = p0.clone().add(a2);
