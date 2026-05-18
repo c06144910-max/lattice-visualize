@@ -66,7 +66,8 @@ export function generate3DAtoms(lattice, cells) {
 
                     atoms.push({
                         position: p,
-                        color: atom.color
+                        color: atom.color,
+                        type: atom.type ?? 'default'
                     });
                 }
             }

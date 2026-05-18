@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+
 import { ConvexGeometry } from
 'three/examples/jsm/geometries/ConvexGeometry.js';
 
@@ -10,53 +11,29 @@ function v3(v) {
     );
 }
 
-function latticePoint(indices, vectors) {
-    const p = new THREE.Vector3();
-
-    for (let i = 0; i < vectors.length; i++) {
-        p.add(
-            v3(vectors[i]).multiplyScalar(indices[i])
-        );
-    }
-
-    return p;
+function latticePoint(i, j, k, a1, a2, a3) {
+    return a1.clone().multiplyScalar(i)
+        .add(a2.clone().multiplyScalar(j))
+        .add(a3.clone().multiplyScalar(k));
 }
 
-function getNeighborVectors(vectors) {
-    const dim = vectors.length;
-    const neighbors = [];
+function basisOffset(atom, a1, a2, a3) {
+    const p = atom.frac ?? atom.pos;
 
-    const range = [-1, 0, 1];
-
-    for (const i of range) {
-        for (const j of range) {
-            for (const k of dim === 3 ? range : [0]) {
-                const indices =
-                    dim === 3
-                        ? [i, j, k]
-                        : [i, j];
-
-                if (indices.every(n => n === 0)) {
-                    continue;
-                }
-
-                neighbors.push(
-                    latticePoint(indices, vectors)
-                );
-            }
-        }
-    }
-
-    return neighbors;
+    return a1.clone().multiplyScalar(p[0])
+        .add(a2.clone().multiplyScalar(p[1]))
+        .add(a3.clone().multiplyScalar(p[2] ?? 0));
 }
 
-function insideAllHalfspaces(p, neighbors) {
+function makePlane(normal, c) {
+    return { normal, c };
+}
+
+function insideAllPlanes(p, planes) {
     const eps = 1e-6;
 
-    for (const R of neighbors) {
-        const c = R.lengthSq() / 2;
-
-        if (p.dot(R) > c + eps) {
+    for (const plane of planes) {
+        if (p.dot(plane.normal) > plane.c + eps) {
             return false;
         }
     }
@@ -64,53 +41,52 @@ function insideAllHalfspaces(p, neighbors) {
     return true;
 }
 
-function createWignerSeitz3DGeometry(vectors) {
-    const neighbors =
-        getNeighborVectors(vectors);
+function createVoronoiGeometryFromNeighbors(neighbors) {
+    const planes = neighbors.map(R =>
+        makePlane(
+            R,
+            R.lengthSq() / 2
+        )
+    );
 
     const points = [];
 
-    for (let a = 0; a < neighbors.length; a++) {
-        for (let b = a + 1; b < neighbors.length; b++) {
-            for (let c = b + 1; c < neighbors.length; c++) {
+    for (let i = 0; i < planes.length; i++) {
+        for (let j = i + 1; j < planes.length; j++) {
+            for (let k = j + 1; k < planes.length; k++) {
+                const P1 = planes[i];
+                const P2 = planes[j];
+                const P3 = planes[k];
 
-                const R1 = neighbors[a];
-                const R2 = neighbors[b];
-                const R3 = neighbors[c];
+                const n1 = P1.normal;
+                const n2 = P2.normal;
+                const n3 = P3.normal;
 
-                const matrix =
-                    new THREE.Matrix3();
+                const matrix = new THREE.Matrix3();
 
                 matrix.set(
-                    R1.x, R1.y, R1.z,
-                    R2.x, R2.y, R2.z,
-                    R3.x, R3.y, R3.z
+                    n1.x, n1.y, n1.z,
+                    n2.x, n2.y, n2.z,
+                    n3.x, n3.y, n3.z
                 );
 
-                const det = matrix.determinant();
-
-                if (Math.abs(det) < 1e-8) {
+                if (Math.abs(matrix.determinant()) < 1e-8) {
                     continue;
                 }
 
                 const rhs = new THREE.Vector3(
-                    R1.lengthSq() / 2,
-                    R2.lengthSq() / 2,
-                    R3.lengthSq() / 2
+                    P1.c,
+                    P2.c,
+                    P3.c
                 );
 
-                const inv =
-                    matrix.clone().invert();
-
                 const p =
-                    rhs.clone().applyMatrix3(inv);
+                    rhs.clone()
+                        .applyMatrix3(
+                            matrix.clone().invert()
+                        );
 
-                if (
-                    insideAllHalfspaces(
-                        p,
-                        neighbors
-                    )
-                ) {
+                if (insideAllPlanes(p, planes)) {
                     const exists =
                         points.some(q =>
                             q.distanceTo(p) < 1e-5
@@ -124,77 +100,117 @@ function createWignerSeitz3DGeometry(vectors) {
         }
     }
 
+    if (points.length < 4) {
+        return null;
+    }
+
     return new ConvexGeometry(points);
 }
 
-function clipPolygonByHalfPlane(polygon, n, c) {
-    const result = [];
+function createPrototypeVoronoiGeometry(
+    lattice,
+    basisAtom
+) {
+    const a1 = v3(lattice.cellVectors[0]);
+    const a2 = v3(lattice.cellVectors[1]);
+    const a3 = v3(lattice.cellVectors[2]);
 
-    for (let i = 0; i < polygon.length; i++) {
-        const A = polygon[i];
-        const B = polygon[(i + 1) % polygon.length];
+    const center =
+        basisOffset(
+            basisAtom,
+            a1,
+            a2,
+            a3
+        );
 
-        const da = A.dot(n) - c;
-        const db = B.dot(n) - c;
+    const neighbors = [];
 
-        const insideA = da <= 1e-6;
-        const insideB = db <= 1e-6;
+    for (let i = -1; i <= 1; i++) {
+        for (let j = -1; j <= 1; j++) {
+            for (let k = -1; k <= 1; k++) {
+                const cellOrigin =
+                    latticePoint(
+                        i,
+                        j,
+                        k,
+                        a1,
+                        a2,
+                        a3
+                    );
 
-        if (insideA && insideB) {
-            result.push(B);
-        }
-        else if (insideA && !insideB) {
-            const t = da / (da - db);
-            result.push(A.clone().lerp(B, t));
-        }
-        else if (!insideA && insideB) {
-            const t = da / (da - db);
-            result.push(A.clone().lerp(B, t));
-            result.push(B);
+                for (const other of lattice.basis) {
+                    const otherPosition =
+                        cellOrigin.clone().add(
+                            basisOffset(
+                                other,
+                                a1,
+                                a2,
+                                a3
+                            )
+                        );
+
+                    const R =
+                        otherPosition
+                            .clone()
+                            .sub(center);
+
+                    if (R.lengthSq() < 1e-8) {
+                        continue;
+                    }
+
+                    neighbors.push(R);
+                }
+            }
         }
     }
 
-    return result;
-}
+    neighbors.sort(
+        (A, B) =>
+            A.lengthSq() - B.lengthSq()
+    );
 
-function createWignerSeitz2DShape(vectors) {
-    const neighbors =
-        getNeighborVectors(vectors);
+    const limitedNeighbors =
+        neighbors.slice(0, 32);
 
-    let polygon = [
-        new THREE.Vector3(-10, -10, 0),
-        new THREE.Vector3( 10, -10, 0),
-        new THREE.Vector3( 10,  10, 0),
-        new THREE.Vector3(-10,  10, 0)
-    ];
-
-    for (const R of neighbors) {
-        polygon =
-            clipPolygonByHalfPlane(
-                polygon,
-                R,
-                R.lengthSq() / 2
-            );
-    }
-
-    return new THREE.Shape(
-        polygon.map(
-            p => new THREE.Vector2(p.x, p.y)
-        )
+    return createVoronoiGeometryFromNeighbors(
+        limitedNeighbors
     );
 }
+
+function createGeometryMap(lattice) {
+    const geometryMap = new Map();
+
+    for (const basisAtom of lattice.basis) {
+        const type =
+            basisAtom.type ?? 'default';
+
+        if (geometryMap.has(type)) {
+            continue;
+        }
+
+        const geometry =
+            createPrototypeVoronoiGeometry(
+                lattice,
+                basisAtom
+            );
+
+        if (geometry) {
+            geometryMap.set(
+                type,
+                geometry
+            );
+        }
+    }
+
+    return geometryMap;
+}
+
 export function renderWignerSeitz(
     group,
     lattice,
     atoms
 ) {
     group.clear();
-
-    const vectors =
-        lattice.primitiveVectors;
-
-    const dim =
-        vectors.length;
 
     const fillMaterial =
         new THREE.MeshPhongMaterial({
@@ -210,34 +226,23 @@ export function renderWignerSeitz(
             color: 0xffffff
         });
 
-    let baseGeometry;
-
-    if (dim === 3) {
-        baseGeometry =
-            createWignerSeitz3DGeometry(
-                vectors
-            );
-    }
-    else {
-        const shape =
-            createWignerSeitz2DShape(
-                vectors
-            );
-
-        baseGeometry =
-            new THREE.ShapeGeometry(shape);
-    }
-
-    const edgeGeometry =
-        new THREE.EdgesGeometry(
-            baseGeometry
-        );
+    const geometryMap =
+        createGeometryMap(lattice);
 
     for (const atom of atoms) {
+        const type =
+            atom.type ?? 'default';
+
+        const geometry =
+            geometryMap.get(type);
+
+        if (!geometry) {
+            continue;
+        }
 
         const mesh =
             new THREE.Mesh(
-                baseGeometry,
+                geometry,
                 fillMaterial
             );
 
@@ -249,7 +254,7 @@ export function renderWignerSeitz(
 
         const edges =
             new THREE.LineSegments(
-                edgeGeometry,
+                new THREE.EdgesGeometry(geometry),
                 edgeMaterial
             );
 

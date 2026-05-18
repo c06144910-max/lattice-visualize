@@ -264,6 +264,8 @@ const {
 //
 // helpers
 //
+
+
 function renderLatticePreview(lattice) {
     previewGroup.clear();
 
@@ -428,6 +430,109 @@ function clearAllGroups() {
 // Brillouin zone
 // = Wigner-Seitz cell in reciprocal space
 //
+function clipPolygonByHalfPlane(
+    polygon,
+    n,
+    c
+) {
+    const result = [];
+
+    for (let i = 0; i < polygon.length; i++) {
+        const A = polygon[i];
+        const B = polygon[(i + 1) % polygon.length];
+
+        const da = A.dot(n) - c;
+        const db = B.dot(n) - c;
+
+        const insideA = da <= 1e-6;
+        const insideB = db <= 1e-6;
+
+        if (insideA && insideB) {
+            result.push(B);
+        }
+        else if (insideA && !insideB) {
+            const t = da / (da - db);
+            result.push(A.clone().lerp(B, t));
+        }
+        else if (!insideA && insideB) {
+            const t = da / (da - db);
+            result.push(A.clone().lerp(B, t));
+            result.push(B);
+        }
+    }
+
+    return result;
+}
+
+function render2DBrillouinZone(
+    group,
+    bVectors
+) {
+    let polygon = [
+        new THREE.Vector3(-10, -10, 0),
+        new THREE.Vector3( 10, -10, 0),
+        new THREE.Vector3( 10,  10, 0),
+        new THREE.Vector3(-10,  10, 0)
+    ];
+
+    const [b1, b2] = bVectors;
+
+    for (let h = -1; h <= 1; h++) {
+        for (let k = -1; k <= 1; k++) {
+            if (h === 0 && k === 0) continue;
+
+            const G =
+                b1.clone().multiplyScalar(h)
+                    .add(
+                        b2.clone().multiplyScalar(k)
+                    );
+
+            polygon =
+                clipPolygonByHalfPlane(
+                    polygon,
+                    G,
+                    G.lengthSq() / 2
+                );
+        }
+    }
+
+    const shape =
+        new THREE.Shape(
+            polygon.map(
+                p => new THREE.Vector2(p.x, p.y)
+            )
+        );
+
+    const geometry =
+        new THREE.ShapeGeometry(shape);
+
+    const material =
+        new THREE.MeshPhongMaterial({
+            color: 0xffeeee,
+            transparent: true,
+            opacity: 0.25,
+            side: THREE.DoubleSide,
+            depthWrite: false
+        });
+
+    const mesh =
+        new THREE.Mesh(
+            geometry,
+            material
+        );
+
+    group.add(mesh);
+
+    const edges =
+        new THREE.LineSegments(
+            new THREE.EdgesGeometry(geometry),
+            new THREE.LineBasicMaterial({
+                color: 0xffeeee
+            })
+        );
+
+    group.add(edges);
+}
 
 function renderBrillouinZoneFromWS(
     group,
@@ -438,26 +543,46 @@ function renderBrillouinZoneFromWS(
     const scale = 0.18;
 
     const bVectors =
-        computeReciprocalVectors(
-            lattice
-        ).map(v => [
-            v.x * scale,
-            v.y * scale,
-            v.z * scale
-        ]);
+        computeReciprocalVectors(lattice)
+            .map(v =>
+                v.clone().multiplyScalar(scale)
+            );
+
+    //
+    // 2D Brillouin zone
+    //
+
+    if (bVectors.length === 2) {
+        render2DBrillouinZone(
+            group,
+            bVectors
+        );
+
+        return;
+    }
+
+    //
+    // 3D Brillouin zone
+    // = Wigner-Seitz cell in reciprocal space
+    //
 
     const reciprocalLattice = {
-        primitiveVectors: bVectors
+        cellVectors: bVectors.map(v => [v.x, v.y, v.z]),
+        primitiveVectors: bVectors.map(v => [v.x, v.y, v.z]),
+
+        basis: [
+            {
+                pos: [0, 0, 0],
+                color: 0xffeeee,
+                type: 'reciprocal'
+            }
+        ]
     };
 
     const originPoint = [
         {
-            position:
-                new THREE.Vector3(
-                    0,
-                    0,
-                    0
-                )
+            position: new THREE.Vector3(0, 0, 0),
+            type: 'reciprocal'
         }
     ];
 
@@ -467,7 +592,6 @@ function renderBrillouinZoneFromWS(
         originPoint
     );
 }
-
 //
 // rebuild
 //
@@ -656,9 +780,9 @@ function rebuild() {
                             .multiplyScalar(1 / 3)
                       );
                   
-                primitiveGroup.position.add(
-                    shift
-                );
+                wignerSeitzGroup.position.add(
+    shift
+);
             }       
         }
 
@@ -711,7 +835,7 @@ function rebuild() {
                                 .multiplyScalar(1)
                           );
                       
-                    primitiveGroup.position.add(
+                    wignerSeitzGroup.position.add(
                         shift
                     );
             }       
@@ -740,30 +864,7 @@ function rebuild() {
     label.innerText =
 `${dimension} ${currentType}
 
-cells :
-${cells}
-
-atoms :
-${atoms.length}
-
-unit cells :
-${showCellMeshes ? 'ON' : 'OFF'}
-
-primitive cells :
-${showPrimitiveMeshes ? 'ON' : 'OFF'}
-
-nearest bonds :
-${showNearestBonds ? 'ON' : 'OFF'}
-
-Wigner-Seitz :
-${showWignerSeitz ? 'ON' : 'OFF'}
-
-reciprocal :
-${reciprocalMode ? 'ON' : 'OFF'}
-
-Brillouin zone :
-${showBrillouinZone ? 'ON' : 'OFF'}`;
-
+atoms : ${atoms.length} `;
 
 
 renderLatticePreview(lattice);
@@ -777,8 +878,12 @@ renderLatticePreview(lattice);
 scButton.addEventListener('click', () => {
     dimension = '3D';
     currentType = 'SC';
-
+    primitiveButton.style.display = 'block';
     WSButton.style.display = 'block';
+
+    bondButton.style.top = '300px';
+    reciprocalButton.style.top = '400px'
+    brillouinButton.style.top = '450px'
 
     rebuild();
 });
@@ -786,8 +891,12 @@ scButton.addEventListener('click', () => {
 bccButton.addEventListener('click', () => {
     dimension = '3D';
     currentType = 'BCC';
-
+    primitiveButton.style.display = 'block';
     WSButton.style.display = 'block';
+
+    bondButton.style.top = '300px';
+    reciprocalButton.style.top = '400px'
+    brillouinButton.style.top = '450px'
 
     rebuild();
 });
@@ -795,8 +904,12 @@ bccButton.addEventListener('click', () => {
 fccButton.addEventListener('click', () => {
     dimension = '3D';
     currentType = 'FCC';
-
+    primitiveButton.style.display = 'block';
     WSButton.style.display = 'block';
+
+        bondButton.style.top = '300px';
+    reciprocalButton.style.top = '400px'
+    brillouinButton.style.top = '450px'
 
     rebuild();
 });
@@ -804,9 +917,13 @@ fccButton.addEventListener('click', () => {
 diamondButton.addEventListener('click', () => {
     dimension = '3D';
     currentType = 'DIAMOND';
-
+    primitiveButton.style.display = 'block';
     WSButton.style.display = 'block';
 
+    bondButton.style.top = '300px';
+    reciprocalButton.style.top = '400px'
+    brillouinButton.style.top = '450px'
+    
     rebuild();
 });
 
@@ -816,9 +933,17 @@ squareButton.addEventListener('click', () => {
     dimension = '2D';
     currentType = 'SQUARE';
 
-    showWignerSeitz = false;
-    WSButton.innerText = 'Wigner-Seitz OFF';
     WSButton.style.display = 'none';
+
+    primitiveButton.style.display = 'none';
+
+    bondButton.style.top = '250px';
+    reciprocalButton.style.top = '300px'
+    brillouinButton.style.top = '350px'
+
+    showPrimitiveMeshes = false;
+    primitiveButton.innerText =
+        'Primitive Cells OFF';
 
     rebuild();
 });
@@ -827,9 +952,17 @@ triangularButton.addEventListener('click', () => {
     dimension = '2D';
     currentType = 'TRIANGULAR';
 
-    showWignerSeitz = false;
-    WSButton.innerText = 'Wigner-Seitz OFF';
     WSButton.style.display = 'none';
+
+    primitiveButton.style.display = 'none';
+
+    bondButton.style.top = '250px';
+    reciprocalButton.style.top = '300px'
+    brillouinButton.style.top = '350px'
+
+    showPrimitiveMeshes = false;
+    primitiveButton.innerText =
+        'Primitive Cells OFF';
 
     rebuild();
 });
@@ -838,9 +971,17 @@ honeycombButton.addEventListener('click', () => {
     dimension = '2D';
     currentType = 'HONEYCOMB';
 
-    showWignerSeitz = false;
-    WSButton.innerText = 'Wigner-Seitz OFF';
     WSButton.style.display = 'none';
+
+    primitiveButton.style.display = 'none';
+
+    bondButton.style.top = '250px';
+    reciprocalButton.style.top = '300px'
+    brillouinButton.style.top = '350px'
+
+    showPrimitiveMeshes = false;
+    primitiveButton.innerText =
+        'Primitive Cells OFF';
 
     rebuild();
 });

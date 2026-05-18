@@ -1,3 +1,16 @@
+function styleButton(button) {
+
+    button.style.width = '180px';
+
+    button.style.height = '32px';
+
+    button.style.boxSizing =
+        'border-box';
+
+    button.style.fontFamily =
+        'monospace';
+}
+
 function createButton(text, left, top = 60) {
     const button = document.createElement('button');
 
@@ -40,41 +53,44 @@ export function createUI() {
     const diamondButton = createButton( 'Diamond', 220);
 
 
-    const squareButton = createButton('Square', 20, 100);
-    const triangularButton = createButton('Triangular', 110, 100);
-    const honeycombButton = createButton('Honeycomb', 240, 100);
+    const squareButton = createButton('Square', 20, 120);
+    const triangularButton = createButton('Triangular', 110, 120);
+    const honeycombButton = createButton('Honeycomb', 240, 120);
 
-    const cellButton = createButton('Unit Cells OFF', 20, 140);
-    const primitiveButton = createButton('Primitive Cells OFF', 170, 140 );
-    const bondButton = createButton('Nearest Bonds OFF',340,140 );
-    const WSButton = createButton('Wigner-Seitz OFF',510,140 );
+    const cellButton = createButton('Unit Cells OFF', 20, 200);
+    const primitiveButton = createButton('Primitive Cells OFF', 20, 250 );
+    const bondButton = createButton('Nearest Bonds OFF',20,300 );
+    const WSButton = createButton('Wigner-Seitz OFF',20,350 );
 
-    const reciprocalButton =
-    createButton(
-        'Reciprocal Mode OFF',
-        20,
-        220
-    );
-    const brillouinButton =
-        createButton(
-            'Brillouin Zone OFF',
-            20,
-            260
-        );
+    const reciprocalButton = createButton('Reciprocal Mode OFF', 20, 400 );
+    const brillouinButton = createButton( 'Brillouin Zone OFF', 20, 450 );
     brillouinButton.style.display = 'none';
 
-
+    styleButton(cellButton)
+    styleButton(primitiveButton)
+    styleButton(bondButton)
+    styleButton(WSButton)
+    styleButton(reciprocalButton)
+    styleButton(brillouinButton)    
     
     const label = document.createElement('div');
 
 
     label.style.position = 'absolute';
-    label.style.top = '190px';
-    label.style.left = '20px';
-    label.style.color = 'white';
-    label.style.fontFamily = 'monospace';
-    label.style.whiteSpace = 'pre';
 
+    label.style.left = '20px';
+    label.style.bottom = '20px';
+
+    label.style.color = 'white';
+
+    label.style.fontFamily = 'monospace';
+
+    label.style.background =
+        'rgba(0,0,0,0.5)';
+
+    label.style.padding = '10px';
+
+    label.style.borderRadius = '8px';
     document.body.appendChild(label);
 
 
@@ -84,7 +100,7 @@ export function createUI() {
 
     latticeControl.style.position = 'absolute';
     latticeControl.style.right = '20px';
-    latticeControl.style.top = '20px';
+    latticeControl.style.top = '200px';
     latticeControl.style.color = 'white';
     latticeControl.style.fontFamily = 'monospace';
     latticeControl.style.background = 'rgba(0,0,0,0.5)';
