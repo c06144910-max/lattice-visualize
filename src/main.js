@@ -22,6 +22,20 @@ import {
 
 import { createUI } from './ui/ui';
 
+import {
+    getSquareBandData,
+    getSCBandData,
+    getTriangularBandData,
+    getBCCBandData,
+    getFCCBandData,
+    getHoneycombBandData,
+    getDiamondBandData
+} from './band/bandStructure';
+
+import {
+    createBandChart,
+    renderBandChart
+} from './band/renderBandChart';
 //
 // scenes
 //
@@ -219,6 +233,14 @@ const latticeScale = {
 let dimension = '3D';
 let currentType = 'BCC';
 
+// let hoppingT = 1;
+
+let hoppingT = {
+    x: 1,
+    y: 1,
+    z: 1
+};
+
 let showCellMeshes = false;
 let showPrimitiveMeshes = false;
 let showNearestBonds = false;
@@ -227,6 +249,11 @@ let showWignerSeitz = false;
 let reciprocalMode = false;
 let showBrillouinZone = false;
 
+let showBand = false;
+let currentLattice = null;
+
+const bandCanvas =
+    createBandChart();
 //
 // UI
 //
@@ -261,7 +288,125 @@ const {
     bValue,
     cValue,
     resetLatticeButton,
+
+    bandButton,
+    // tScale,
+    // tValue,
+    txScale,
+    tyScale,
+    tzScale,
+
+    txValue,
+    tyValue,
+    tzValue,
+
+    resetHoppingButton,
 } = createUI();
+
+
+//
+//band
+//
+
+
+
+function updateBandChart() {
+    if (!currentLattice) return;
+
+    if (!showBand) {
+        bandCanvas.style.display = 'none';
+        return;
+    }
+
+    if (currentType === 'SQUARE') {
+        bandCanvas.style.display = 'block';
+
+        renderBandChart(
+            bandCanvas,
+            getSquareBandData(currentLattice, hoppingT),
+            'Square lattice band'
+        );
+
+        return;
+    }
+
+    if (currentType === 'SC') {
+        bandCanvas.style.display = 'block';
+
+        renderBandChart(
+            bandCanvas,
+            getSCBandData(currentLattice, hoppingT),
+            'Simple cubic band'
+        );
+
+        return;
+    }
+
+    if (currentType === 'TRIANGULAR') {
+        bandCanvas.style.display = 'block';
+
+        renderBandChart(
+            bandCanvas,
+            getTriangularBandData(currentLattice, hoppingT),
+            'Triangular band'
+        );
+
+        return;
+    }
+
+    if (currentType === 'BCC') {
+        bandCanvas.style.display = 'block';
+
+        renderBandChart(
+            bandCanvas,
+            getBCCBandData(currentLattice, hoppingT),
+            'BCC band'
+        );
+
+        return;
+    }
+
+    if (currentType === 'FCC') {
+        bandCanvas.style.display = 'block';
+
+        renderBandChart(
+            bandCanvas,
+            getFCCBandData(currentLattice, hoppingT),
+            'FCC band'
+        );
+
+        return;
+    }
+
+    if (currentType === 'HONEYCOMB') {
+        bandCanvas.style.display = 'block';
+
+        renderBandChart(
+            bandCanvas,
+            getHoneycombBandData(currentLattice, hoppingT),
+            'HoneyComb band'
+        );
+
+        return;
+    }
+
+    if (currentType === 'DIAMOND') {
+        bandCanvas.style.display = 'block';
+
+        renderBandChart(
+            bandCanvas,
+            getDiamondBandData(currentLattice, hoppingT),
+            'Diamond band'
+        );
+
+        return;
+    }
+
+    bandCanvas.style.display = 'none';
+}
+
+
+
 
 //
 // helpers
@@ -356,6 +501,28 @@ aScale.addEventListener('input', updateLatticeScale);
 bScale.addEventListener('input', updateLatticeScale);
 cScale.addEventListener('input', updateLatticeScale);
 
+function updateHoppingT() {
+
+    hoppingT.x = parseFloat(txScale.value);
+
+    hoppingT.y = parseFloat(tyScale.value);
+
+    hoppingT.z = parseFloat( tzScale.value);
+
+    txValue.innerText = hoppingT.x.toFixed(2);
+
+    tyValue.innerText = hoppingT.y.toFixed(2);
+
+    tzValue.innerText = hoppingT.z.toFixed(2);
+
+    updateBandChart();
+}
+
+txScale.addEventListener('input',updateHoppingT);
+
+tyScale.addEventListener('input',updateHoppingT);
+
+tzScale.addEventListener('input',updateHoppingT);
 
 function v3(v) {
     return new THREE.Vector3(
@@ -607,8 +774,9 @@ function rebuild() {
     let atoms;
 
     if (dimension === '3D') {
-        lattice =
-            lattice = getScaledLattice(LATTICES_3D[currentType]);
+
+        lattice = getScaledLattice(LATTICES_3D[currentType]);
+        currentLattice = lattice;
 
         atoms =
             generate3DAtoms(
@@ -686,7 +854,7 @@ function rebuild() {
 
     else {
         lattice = getScaledLattice(LATTICES_2D[currentType]);
-
+        currentLattice = lattice;
         atoms =
             generate2DAtoms(
                 lattice,
@@ -762,6 +930,10 @@ atoms : ${atoms.length} `;
 
 
 renderLatticePreview(lattice);
+
+
+updateBandChart();
+
 
 }
 
@@ -987,6 +1159,47 @@ slider.addEventListener(
     'input',
     rebuild
 );
+
+
+bandButton.addEventListener('click', () => {
+    showBand = !showBand;
+
+    bandButton.innerText =
+        showBand
+            ? 'Band ON'
+            : 'Band OFF';
+
+    rebuild();
+});
+
+resetHoppingButton.addEventListener(
+    'click',
+    () => {
+
+        txScale.value = 1;
+        tyScale.value = 1;
+        tzScale.value = 1;
+
+        updateHoppingT();
+    }
+);
+
+// function updateHoppingT() {
+//     hoppingT = parseFloat(tScale.value);
+
+//     tValue.innerText =
+//         hoppingT.toFixed(2);
+
+//     updateBandChart();
+// }
+
+// if (tScale && tValue) {
+//     tScale.addEventListener(
+//         'input',
+//         updateHoppingT
+//     );
+// }
+
 
 //
 // initial

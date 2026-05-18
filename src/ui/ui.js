@@ -32,7 +32,11 @@ function createButton(text, left, top = 60) {
     return button;
 }
 
+
+
 export function createUI() {
+
+    
     const slider = document.createElement('input');
 
     slider.type = 'range';
@@ -64,6 +68,10 @@ export function createUI() {
 
     const reciprocalButton = createButton('Reciprocal Mode OFF', 20, 400 );
     const brillouinButton = createButton( 'Brillouin Zone OFF', 20, 450 );
+
+    const bandButton =createButton('Band OFF', 20, 500 );
+
+
     brillouinButton.style.display = 'none';
 
     styleButton(cellButton)
@@ -122,7 +130,47 @@ export function createUI() {
     <label>c</label>
     <input id="cScale" type="range" min="0.5" max="2" step="0.01" value="1">
     <span id="cValue">1.00</span>
+
+    <br>
+
+    <div>hopping</div>
+
+    <label>tx</label>
+    <input id="txScale"
+    type="range"
+    min="0"
+    max="3"
+    step="0.01"
+    value="1">
+
+    <span id="txValue">1.00</span>
+
+    <br>
+
+    <label>ty</label>
+    <input id="tyScale"
+    type="range"
+    min="0"
+    max="3"
+    step="0.01"
+    value="1">
+
+    <span id="tyValue">1.00</span>
+
+    <br>
+
+    <label>tz</label>
+    <input id="tzScale"
+    type="range"
+    min="0"
+    max="3"
+    step="0.01"
+    value="1">
+
+    <span id="tzValue">1.00</span>
+
     `;
+    
 
     document.body.appendChild(latticeControl);
 
@@ -134,6 +182,38 @@ export function createUI() {
     const bValue = document.getElementById('bValue');
     const cValue = document.getElementById('cValue');
 
+    const resetHoppingButton = document.createElement('button');
+
+
+    const txScale =
+    document.getElementById(
+        'txScale'
+    );
+
+    const tyScale =
+        document.getElementById(
+            'tyScale'
+        );
+
+    const tzScale =
+        document.getElementById(
+            'tzScale'
+        );
+
+    const txValue =
+        document.getElementById(
+            'txValue'
+        );
+
+    const tyValue =
+        document.getElementById(
+            'tyValue'
+        );
+
+    const tzValue =
+        document.getElementById(
+            'tzValue'
+        );
 
     const resetLatticeButton =
     document.createElement('button');
@@ -156,6 +236,26 @@ export function createUI() {
     );
 
 
+    resetHoppingButton.innerText =
+        'Reset Hopping';
+
+    resetHoppingButton.style.marginTop =
+        '8px';
+
+    resetHoppingButton.style.width =
+        '100%';
+
+    latticeControl.appendChild(
+        document.createElement('br')
+    );
+
+    latticeControl.appendChild(
+        resetHoppingButton
+    );
+
+    
+
+    
 
     return {
         slider,
@@ -190,5 +290,18 @@ export function createUI() {
         cValue,
 
         resetLatticeButton,
+
+        bandButton,
+        // tScale,
+        // tValue,
+        txScale,
+        tyScale,
+        tzScale,
+
+        txValue,
+        tyValue,
+        tzValue,
+
+        resetHoppingButton,
     };
 }
