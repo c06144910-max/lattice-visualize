@@ -43,18 +43,14 @@ function normalizeT(t) {
     };
 }
 
-function hoppingByDirection(
-    delta,
-    tInput
-) {
+function hoppingByDirection(delta, tInput) {
     const t = normalizeT(tInput);
 
     const ax = Math.abs(delta[0]);
     const ay = Math.abs(delta[1]);
     const az = Math.abs(delta[2] ?? 0);
 
-    const norm =
-        ax + ay + az;
+    const norm = ax + ay + az;
 
     if (norm < 1e-12) {
         return 0;
@@ -81,14 +77,11 @@ function getCellVectors(lattice) {
 }
 
 function getBasisPosition(atom, lattice) {
-    const cell =
-        getCellVectors(lattice);
+    const cell = getCellVectors(lattice);
 
-    const p =
-        atom.frac ?? atom.pos;
+    const p = atom.frac ?? atom.pos;
 
-    const result =
-        zeroVec(3);
+    const result = zeroVec(3);
 
     for (let i = 0; i < cell.length; i++) {
         result[0] += cell[i][0] * p[i];
@@ -104,13 +97,9 @@ function complexMagnitudeFromTerms(terms) {
     let im = 0;
 
     for (const term of terms) {
-        re +=
-            term.amp *
-            Math.cos(term.phase);
+        re += term.amp * Math.cos(term.phase);
 
-        im +=
-            term.amp *
-            Math.sin(term.phase);
+        im += term.amp * Math.sin(term.phase);
     }
 
     return Math.sqrt(
@@ -140,33 +129,19 @@ export function generateKPath(
     const result = [];
     let distance = 0;
 
-    for (
-        let i = 0;
-        i < points.length - 1;
-        i++
-    ) {
+    for (let i = 0; i < points.length - 1; i++) {
         const start = points[i];
         const end = points[i + 1];
 
-        for (
-            let j = 0;
-            j < pointsPerSegment;
-            j++
-        ) {
-            const t =
-                j / pointsPerSegment;
+        for (let j = 0; j < pointsPerSegment; j++) {
+            const t = j / pointsPerSegment;
 
-            const k =
-                lerpPoint(
-                    start.k,
-                    end.k,
-                    t
-                );
+            const k = lerpPoint(start.k, end.k, t);
 
             if (result.length > 0) {
                 const prev = result[result.length - 1].k;
 
-                const dk =Math.sqrt(k.reduce((sum, v, idx) => {const d = v - prev[idx];            return sum + d * d;        },        0    ));
+                const dk = Math.sqrt(k.reduce((sum, v, idx) => {const d = v - prev[idx];            return sum + d * d;        },        0    ));
 
                 distance += dk;
             }
@@ -186,7 +161,7 @@ export function generateKPath(
 // generic band helpers
 //
 
-function singleBandFromNeighbors(k, neighbors, t ) {
+function singleBandFromNeighbors(k, neighbors, t) {
     let energy = 0;
 
     for (const delta of neighbors) {
@@ -395,10 +370,7 @@ function diamondNeighbors(lattice) {
 // public band functions
 //
 
-export function getSquareBandData(
-    lattice,
-    t = 1
-) {
+export function getSquareBandData(lattice, t = 1) {
     const path = path2DSquare(lattice);
 
     const neighbors = squareNeighbors(lattice);
@@ -435,10 +407,7 @@ export function getSCBandData(
     }));
 }
 
-export function getTriangularBandData(
-    lattice,
-    t = 1
-) {
+export function getTriangularBandData(lattice, t = 1) {
     const path = path2DHexagonal(lattice);
 
     const neighbors = triangularNeighbors(lattice);
@@ -455,10 +424,7 @@ export function getTriangularBandData(
     }));
 }
 
-export function getBCCBandData(
-    lattice,
-    t = 1
-) {
+export function getBCCBandData(lattice, t = 1) {
     const path = path3DBCC(lattice);
 
     const neighbors = bccNeighbors(lattice);
@@ -475,10 +441,7 @@ export function getBCCBandData(
     }));
 }
 
-export function getFCCBandData(
-    lattice,
-    t = 1
-) {
+export function getFCCBandData(lattice, t = 1) {
     const path = path3DFCC(lattice);
 
     const neighbors = fccNeighbors(lattice);
@@ -495,10 +458,7 @@ export function getFCCBandData(
     }));
 }
 
-export function getHoneycombBandData(
-    lattice,
-    t = 1
-) {
+export function getHoneycombBandData(lattice, t = 1) {
     const path = path2DHexagonal(lattice);
 
     const neighbors = honeycombNeighbors(lattice);
@@ -530,10 +490,7 @@ export function getHoneycombBandData(
     return {lower, upper};
 }
 
-export function getDiamondBandData(
-    lattice,
-    t = 1
-) {
+export function getDiamondBandData(lattice, t = 1) {
     const path = path3DFCC(lattice);
 
     const neighbors = diamondNeighbors(lattice);

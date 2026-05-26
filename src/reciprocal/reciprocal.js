@@ -15,24 +15,13 @@ export function computeReciprocalVectors(lattice) {
         const a1 = toVector3(vectors[0]);
         const a2 = toVector3(vectors[1]);
 
-        const area =
-            a1.x * a2.y -
-            a1.y * a2.x;
+        const area = a1.x * a2.y - a1.y * a2.x;
 
-        const factor =
-            2 * Math.PI / area;
+        const factor = 2 * Math.PI / area;
 
-        const b1 = new THREE.Vector3(
-            a2.y * factor,
-            -a2.x * factor,
-            0
-        );
+        const b1 = new THREE.Vector3(a2.y * factor, -a2.x * factor, 0);
 
-        const b2 = new THREE.Vector3(
-            -a1.y * factor,
-            a1.x * factor,
-            0
-        );
+        const b2 = new THREE.Vector3(-a1.y * factor, a1.x * factor, 0);
 
         return [b1, b2];
     }
@@ -41,39 +30,21 @@ export function computeReciprocalVectors(lattice) {
     const a2 = toVector3(vectors[1]);
     const a3 = toVector3(vectors[2]);
 
-    const volume =
-        a1.dot(
-            a2.clone().cross(a3)
-        );
+    const volume = a1.dot(a2.clone().cross(a3));
 
-    const factor =
-        2 * Math.PI / volume;
+    const factor = 2 * Math.PI / volume;
 
-    const b1 =
-        a2.clone()
-            .cross(a3)
-            .multiplyScalar(factor);
+    const b1 = a2.clone().cross(a3).multiplyScalar(factor);
 
-    const b2 =
-        a3.clone()
-            .cross(a1)
-            .multiplyScalar(factor);
+    const b2 = a3.clone().cross(a1).multiplyScalar(factor);
 
-    const b3 =
-        a1.clone()
-            .cross(a2)
-            .multiplyScalar(factor);
+    const b3 = a1.clone().cross(a2).multiplyScalar(factor);
 
     return [b1, b2, b3];
 }
 
-export function generateReciprocalPoints(
-    lattice,
-    cells,
-    scale = 0.18
-) {
-    const bVectors =
-        computeReciprocalVectors(lattice);
+export function generateReciprocalPoints(lattice, cells, scale = 0.18) {
+    const bVectors = computeReciprocalVectors(lattice);
 
     const points = [];
     const range = Math.floor(cells / 2);
@@ -83,12 +54,7 @@ export function generateReciprocalPoints(
 
         for (let h = -range; h <= range; h++) {
             for (let k = -range; k <= range; k++) {
-                const position =
-                    b1.clone().multiplyScalar(h)
-                        .add(
-                            b2.clone().multiplyScalar(k)
-                        )
-                        .multiplyScalar(scale);
+                const position = b1.clone().multiplyScalar(h).add(b2.clone().multiplyScalar(k)).multiplyScalar(scale);
 
                 points.push(position);
             }
@@ -104,12 +70,8 @@ export function generateReciprocalPoints(
             for (let l = -range; l <= range; l++) {
                 const position =
                     b1.clone().multiplyScalar(h)
-                        .add(
-                            b2.clone().multiplyScalar(k)
-                        )
-                        .add(
-                            b3.clone().multiplyScalar(l)
-                        )
+                        .add(b2.clone().multiplyScalar(k))
+                        .add(b3.clone().multiplyScalar(l))
                         .multiplyScalar(scale);
 
                 points.push(position);
@@ -120,47 +82,24 @@ export function generateReciprocalPoints(
     return points;
 }
 
-export function renderReciprocalPoints(
-    group,
-    lattice,
-    cells
-) {
+export function renderReciprocalPoints(group, lattice, cells) {
     group.clear();
 
-    const points =
-        generateReciprocalPoints(
-            lattice,
-            cells
-        );
+    const points = generateReciprocalPoints(lattice, cells);
 
-    const geometry =
-        new THREE.SphereGeometry(
-            0.06,
-            24,
-            24
-        );
+    const geometry = new THREE.SphereGeometry(0.06, 24, 24);
 
-    const material =
-        new THREE.MeshStandardMaterial({
-            color: 0xdd99ff
-        });
+    const material = new THREE.MeshStandardMaterial({color: 0xdd99ff});
 
     for (const p of points) {
-        const mesh =
-            new THREE.Mesh(
-                geometry,
-                material
-            );
+        const mesh = new THREE.Mesh(geometry, material);
 
         mesh.position.copy(p);
 
         group.add(mesh);
     }
 
-    renderReciprocalPrimitiveCell(
-    group,
-    lattice
-);
+    renderReciprocalPrimitiveCell(group, lattice);
 }
 
 function createCellGeometryFromVectors(vectors) {
