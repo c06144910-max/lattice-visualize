@@ -41,7 +41,7 @@ export const LATTICES_2D = {
         ]
     },
 
-    HONEYCOMB: {
+    Hexagonal: {
         basis: [
             { pos: [0, 0], color: 0x44aaff },
             { pos: [0.5, Math.sqrt(3) / 6], color: 0xff4444 }

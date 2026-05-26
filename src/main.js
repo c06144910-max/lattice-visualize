@@ -28,7 +28,7 @@ import {
     getTriangularBandData,
     getBCCBandData,
     getFCCBandData,
-    getHoneycombBandData,
+    getHexagonalBandData,
     getDiamondBandData
 } from './band/bandStructure';
 
@@ -252,6 +252,8 @@ let showBrillouinZone = false;
 let showBand = false;
 let currentLattice = null;
 
+let currentAtoms = [];
+
 const bandCanvas =
     createBandChart();
 //
@@ -268,7 +270,7 @@ const {
 
     squareButton,
     triangularButton,
-    honeycombButton,
+    HexagonalButton,
 
     cellButton,
     primitiveButton,
@@ -323,7 +325,7 @@ function updateBandChart() {
 
         renderBandChart(
             bandCanvas,
-            getSquareBandData(currentLattice, hoppingT),
+            getSquareBandData(currentLattice, currentAtoms, hoppingT),
             'Square lattice band'
         );
 
@@ -335,7 +337,7 @@ function updateBandChart() {
 
         renderBandChart(
             bandCanvas,
-            getSCBandData(currentLattice, hoppingT),
+            getSCBandData(currentLattice, currentAtoms, hoppingT),
             'Simple cubic band'
         );
 
@@ -347,7 +349,7 @@ function updateBandChart() {
 
         renderBandChart(
             bandCanvas,
-            getTriangularBandData(currentLattice, hoppingT),
+            getTriangularBandData(currentLattice, currentAtoms,hoppingT),
             'Triangular band'
         );
 
@@ -359,7 +361,7 @@ function updateBandChart() {
 
         renderBandChart(
             bandCanvas,
-            getBCCBandData(currentLattice, hoppingT),
+            getBCCBandData(currentLattice, currentAtoms,hoppingT),
             'BCC band'
         );
 
@@ -371,20 +373,20 @@ function updateBandChart() {
 
         renderBandChart(
             bandCanvas,
-            getFCCBandData(currentLattice, hoppingT),
+            getFCCBandData(currentLattice, currentAtoms,hoppingT),
             'FCC band'
         );
 
         return;
     }
 
-    if (currentType === 'HONEYCOMB') {
+    if (currentType === 'Hexagonal') {
         bandCanvas.style.display = 'block';
 
         renderBandChart(
             bandCanvas,
-            getHoneycombBandData(currentLattice, hoppingT),
-            'HoneyComb band'
+            getHexagonalBandData(currentLattice, currentAtoms,hoppingT),
+            'Hexagonal band'
         );
 
         return;
@@ -395,7 +397,7 @@ function updateBandChart() {
 
         renderBandChart(
             bandCanvas,
-            getDiamondBandData(currentLattice, hoppingT),
+            getDiamondBandData(currentLattice, currentAtoms,hoppingT),
             'Diamond band'
         );
 
@@ -783,6 +785,7 @@ function rebuild() {
                 lattice,
                 cells
             );
+        currentAtoms = atoms;
 
         renderAtoms(
             atomGroup,
@@ -860,6 +863,7 @@ function rebuild() {
                 lattice,
                 cells
             );
+        currentAtoms = atoms;
 
         renderAtoms(
             atomGroup,
@@ -1036,9 +1040,9 @@ triangularButton.addEventListener('click', () => {
     rebuild();
 });
 
-honeycombButton.addEventListener('click', () => {
+HexagonalButton.addEventListener('click', () => {
     dimension = '2D';
-    currentType = 'HONEYCOMB';
+    currentType = 'Hexagonal';
     showWignerSeitz = false;
 
     WSButton.style.display = 'none';
@@ -1385,3 +1389,4 @@ window.addEventListener('resize', () => {
         window.innerHeight
     );
 });
+

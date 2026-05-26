@@ -67,7 +67,8 @@ export function generate3DAtoms(lattice, cells) {
                     atoms.push({
                         position: p,
                         color: atom.color,
-                        type: atom.type ?? 'default'
+                        type: atom.type ?? 'default',
+                        basisIndex: lattice.basis.indexOf(atom)
                     });
                 }
             }

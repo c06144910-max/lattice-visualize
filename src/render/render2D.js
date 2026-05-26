@@ -41,7 +41,9 @@ export function generate2DAtoms(lattice, cells) {
 
                 atoms.push({
                     position: p,
-                    color: b.color
+                    color: b.color,
+                    type: b.type ?? 'default',
+                    basisIndex: lattice.basis.indexOf(b)
                 });
             }
         }

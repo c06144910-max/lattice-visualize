@@ -59,7 +59,7 @@ export function createUI() {
 
     const squareButton = createButton('Square', 20, 120);
     const triangularButton = createButton('Triangular', 110, 120);
-    const honeycombButton = createButton('Honeycomb', 240, 120);
+    const HexagonalButton = createButton('Hexagonal', 240, 120);
 
     const cellButton = createButton('Unit Cells OFF', 20, 200);
     const primitiveButton = createButton('Primitive Cells OFF', 20, 250 );
@@ -267,7 +267,7 @@ export function createUI() {
         
         squareButton,
         triangularButton,
-        honeycombButton,
+        HexagonalButton,
 
         cellButton,
         primitiveButton,
